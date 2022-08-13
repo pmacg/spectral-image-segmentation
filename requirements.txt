@@ -1,0 +1,6 @@
+matplotlib
+numpy
+pandas
+scipy
+sgtl>=0.4.6
+scikit-image

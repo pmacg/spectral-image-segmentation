@@ -8,6 +8,7 @@ import sgtl
 import skimage.transform
 import skimage.measure
 import skimage.filters
+from skimage.color import label2rgb
 from matplotlib import image
 from typing import Optional, List, Dict
 
@@ -135,6 +136,7 @@ class ImageDatasetGraph(DatasetGraph):
         self.downsampled_image_dimensions = []
         self.downsample_factor = downsample_factor
         self.blur_variance = blur_variance
+        self.image = None
         super(ImageDatasetGraph, self).__init__(*args, graph_type="rbf", **kwargs)
 
     def load_graph(self, *args, **kwargs):
@@ -169,6 +171,7 @@ class ImageDatasetGraph(DatasetGraph):
         :return:
         """
         img = image.imread(self.image_filename)
+        self.image = img
         self.original_image_dimensions = (img.shape[0], img.shape[1])
 
         # Compute the downsample factor if needed
@@ -254,8 +257,8 @@ class ImageDatasetGraph(DatasetGraph):
         labelled_image_upsample = labelled_image_upsample[:self.original_image_dimensions[0],
                                                           :self.original_image_dimensions[1]]
 
-        # Save the image
-        image.imsave(filename, labelled_image_upsample)
+        # Save the image, setting the color of each segment to the average of the segment in the original image.
+        image.imsave(filename, label2rgb(labelled_image_upsample, self.image, kind='avg'))
 
     def __str__(self):
         return f"image({self.image_filename})"

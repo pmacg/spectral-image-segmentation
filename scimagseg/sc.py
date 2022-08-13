@@ -27,6 +27,25 @@ def sc_precomputed_eigenvectors(eigvecs, num_clusters, num_eigenvectors):
     return clusters
 
 
+def sc_num_eigenvectors(dataset: scimagseg.imgraph.DatasetGraph, num_clusters: int, num_eigenvectors):
+    """
+    Given a dataset, find the given number of clusters, using the given number of eigenvectors.
+    
+    :param dataset: 
+    :param num_clusters: 
+    :param num_eigenvectors: 
+    :return: 
+    """
+    # First, compute the eigenvectors
+    laplacian_matrix = dataset.graph.normalised_laplacian_matrix()
+    _, eigvecs = scipy.sparse.linalg.eigsh(laplacian_matrix, num_eigenvectors, which='SM')
+
+    # Run spectral clustering on these eigenvectors
+    found_clusters = scimagseg.sc.sc_precomputed_eigenvectors(eigvecs, num_clusters, num_eigenvectors)
+
+    return found_clusters
+
+
 def sc_cond(dataset: scimagseg.imgraph.DatasetGraph, num_clusters: int):
     """
     Given a dataset, and the desired number of clusters, run spectral clustering for every l < k, and return the

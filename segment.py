@@ -4,6 +4,8 @@ A python script for segmenting a given image.
 import argparse
 import scimagseg.imgraph
 import scimagseg.sc
+import warnings
+warnings.filterwarnings("ignore", message="Images with dimensions")
 
 
 def segment_image(input_filename, output_filename, num_clusters):
@@ -18,8 +20,9 @@ def segment_image(input_filename, output_filename, num_clusters):
     # Construct the image graph
     img_graph_ds = scimagseg.imgraph.ImageDatasetGraph(input_filename)
 
-    # Apply spectral clustering to the image
-    segments = scimagseg.sc.sc_cond(img_graph_ds, num_clusters)
+    # Apply spectral clustering to the image - experimental evidence suggest that using half as many eigenvectors as
+    # clusters provides a better image segmentation.
+    segments = scimagseg.sc.sc_num_eigenvectors(img_graph_ds, num_clusters, int(num_clusters / 2))
 
     # Save the result
     img_graph_ds.save_clustering(segments, output_filename)

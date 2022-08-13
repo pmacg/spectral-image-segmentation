@@ -2,6 +2,20 @@
 
 This repository provides a simple python script for image segmentation with spectral clustering.
 
+## Setup
+Install the dependencies with
+
+```commandline
+python -m pip install -r requirements.txt
+```
+
+## Usage
+In order to segment a given image, simply execute
+
+```commandline
+python segment.py <inputFilename> <outputFilename> <numSegments>
+```
+
 ## Reference
 
 If you find this useful in your work, please cite the following paper.

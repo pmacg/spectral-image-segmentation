@@ -130,6 +130,7 @@ dmypy.json
 
 # Ignore images
 *.jpeg
+*.jpg
 *.png
 
 # Ignore pypcharm

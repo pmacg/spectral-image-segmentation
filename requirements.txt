@@ -2,5 +2,5 @@ matplotlib
 numpy
 pandas
 scipy
-sgtl>=0.4.6
+sgtl>=0.5.0
 scikit-image

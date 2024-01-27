@@ -3,6 +3,7 @@ Provides a general definition of a clustering objective function.
 """
 from abc import ABC, abstractmethod
 from typing import List
+
 import sgtl
 
 

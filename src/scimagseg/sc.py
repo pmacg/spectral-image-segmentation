@@ -1,11 +1,12 @@
 """
 Provides methods for spectral clustering, with variable numbers of eigenvectors.
 """
-import scipy as sp
 import scipy.sparse.linalg
+from sklearn.cluster import KMeans
+
 import scimagseg.imgraph
 import scimagseg.objfunc
-from sklearn.cluster import KMeans
+
 
 def sc_precomputed_eigenvectors(eigvecs, num_clusters, num_eigenvectors):
     """
@@ -17,7 +18,8 @@ def sc_precomputed_eigenvectors(eigvecs, num_clusters, num_eigenvectors):
     :return: the found clusters
     """
     # Perform k-means on the eigenvectors to find the clusters
-    labels = KMeans(n_clusters=num_clusters).fit_predict(eigvecs[:, :num_eigenvectors])
+    labels = KMeans(n_clusters=num_clusters).fit_predict(
+        eigvecs[:, :num_eigenvectors])
 
     # Split the clusters.
     clusters = [[] for _ in range(num_clusters)]
@@ -27,7 +29,8 @@ def sc_precomputed_eigenvectors(eigvecs, num_clusters, num_eigenvectors):
     return clusters
 
 
-def sc_num_eigenvectors(dataset: scimagseg.imgraph.DatasetGraph, num_clusters: int, num_eigenvectors):
+def sc_num_eigenvectors(dataset: scimagseg.imgraph.DatasetGraph,
+                        num_clusters: int, num_eigenvectors):
     """
     Given a dataset, find the given number of clusters, using the given number of eigenvectors.
     
@@ -38,10 +41,13 @@ def sc_num_eigenvectors(dataset: scimagseg.imgraph.DatasetGraph, num_clusters: i
     """
     # First, compute the eigenvectors
     laplacian_matrix = dataset.graph.normalised_laplacian_matrix()
-    _, eigvecs = scipy.sparse.linalg.eigsh(laplacian_matrix, num_eigenvectors, which='SM')
+    _, eigvecs = scipy.sparse.linalg.eigsh(laplacian_matrix,
+                                           num_eigenvectors,
+                                           which='SM')
 
     # Run spectral clustering on these eigenvectors
-    found_clusters = scimagseg.sc.sc_precomputed_eigenvectors(eigvecs, num_clusters, num_eigenvectors)
+    found_clusters = scimagseg.sc.sc_precomputed_eigenvectors(
+        eigvecs, num_clusters, num_eigenvectors)
 
     return found_clusters
 
@@ -53,17 +59,22 @@ def sc_cond(dataset: scimagseg.imgraph.DatasetGraph, num_clusters: int):
     """
     # First, compute all of the eigenvectors up front
     laplacian_matrix = dataset.graph.normalised_laplacian_matrix()
-    _, eigvecs = scipy.sparse.linalg.eigsh(laplacian_matrix, num_clusters, which='SM')
+    _, eigvecs = scipy.sparse.linalg.eigsh(laplacian_matrix,
+                                           num_clusters,
+                                           which='SM')
 
     # Optimal clustering
     best_clusters = None
     best_cond = None
     best_num_eigs = None
 
-    for num_eigenvectors in range(1, num_clusters+1):
-        found_clusters = scimagseg.sc.sc_precomputed_eigenvectors(eigvecs, num_clusters, num_eigenvectors)
-        this_expansion = scimagseg.objfunc.KWayExpansion.apply(dataset.graph, found_clusters)
-        if best_cond is None or scimagseg.objfunc.KWayExpansion.better(this_expansion, best_cond):
+    for num_eigenvectors in range(1, num_clusters + 1):
+        found_clusters = scimagseg.sc.sc_precomputed_eigenvectors(
+            eigvecs, num_clusters, num_eigenvectors)
+        this_expansion = scimagseg.objfunc.KWayExpansion.apply(
+            dataset.graph, found_clusters)
+        if best_cond is None or scimagseg.objfunc.KWayExpansion.better(
+                this_expansion, best_cond):
             best_cond = this_expansion
             best_clusters = found_clusters
             best_num_eigs = num_eigenvectors

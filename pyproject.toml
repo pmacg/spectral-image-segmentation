@@ -1,0 +1,27 @@
+[project]
+name = "spectral-image-segmentation"
+version = "1.0"
+authors = [
+  { name="Peter Macgregor" },
+]
+readme = "README.md"
+license = {file = "LICENSE"}
+dynamic = ["dependencies"]
+
+[project.urls]
+Homepage = "https://github.com/pmacg/spectral-image-segmentation"
+Issues = "https://github.com/pmacg/spectral-image-segmentation/issues"
+
+[project.scripts]
+segment = "scimagseg.segment:main"
+
+[tool.setuptools]
+packages = ["scimagseg"]
+package-dir = {"" = "src"}
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"

@@ -3,17 +3,17 @@
 This repository provides a simple python script for image segmentation with spectral clustering.
 
 ## Setup
-Install the dependencies with
+Install the project from this Git repository with
 
 ```commandline
-python -m pip install -r requirements.txt
+python -m pip install git+https://github.com/pmacg/spectral-image-segmentation.git
 ```
 
 ## Usage
 In order to segment a given image, simply execute
 
 ```commandline
-python segment.py <inputFilename> <outputFilename> <numSegments>
+segment <inputFilename> <outputFilename> <numSegments>
 ```
 
 ## Reference

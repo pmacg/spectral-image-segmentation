@@ -2,22 +2,29 @@
 Provides an object to represent an image as a graph, for spectral clustering.
 """
 import math
+from typing import Dict, List, Optional
+
 import numpy
 import scipy as sp
 import sgtl
-import skimage.transform
-import skimage.measure
 import skimage.filters
-from skimage.color import label2rgb
+import skimage.measure
+import skimage.transform
 from matplotlib import image
-from typing import Optional, List, Dict
+from skimage.color import label2rgb
 
-class DatasetGraph(object):
+
+class DatasetGraph:
     """
     This base class represents some data as a graph, for clustering.
     """
 
-    def __init__(self, data_file=None, gt_clusters_file=None, graph_file=None, num_data_points=None, graph_type="knn10"):
+    def __init__(self,
+                 data_file=None,
+                 gt_clusters_file=None,
+                 graph_file=None,
+                 num_data_points=None,
+                 graph_type="knn10"):
         """
         Intiialise the dataset, optionally specifying a data file.
         """
@@ -81,7 +88,8 @@ class DatasetGraph(object):
         :param graph_type: (optional) if there is no edgelist, the type of graph to be constructed.
         """
         if graph_file is not None:
-            self.graph = sgtl.graph.from_edgelist(graph_file, num_vertices=self.num_data_points)
+            self.graph = sgtl.graph.from_edgelist(
+                graph_file, num_vertices=self.num_data_points)
         elif self.raw_data is not None:
             # Construct the graph using the method specified
             if graph_type[:3] == "knn":
@@ -94,7 +102,9 @@ class DatasetGraph(object):
             # Nothing to do
             pass
 
-    def construct_and_save_graph(self, graph_filename: str, graph_type="knn10"):
+    def construct_and_save_graph(self,
+                                 graph_filename: str,
+                                 graph_type="knn10"):
         """
         Construct a graph representing this dataset (using knn10 by default), and save it to the specified file.
 
@@ -120,7 +130,12 @@ class DatasetGraph(object):
 
 class ImageDatasetGraph(DatasetGraph):
 
-    def __init__(self, img_filename, *args, downsample_factor=None, blur_variance=1, **kwargs):
+    def __init__(self,
+                 img_filename,
+                 *args,
+                 downsample_factor=None,
+                 blur_variance=1,
+                 **kwargs):
         """Construct a dataset graph from a single image.
 
         We will construct a graph from the image based on the gaussian radial basis function.
@@ -137,24 +152,29 @@ class ImageDatasetGraph(DatasetGraph):
         self.downsample_factor = downsample_factor
         self.blur_variance = blur_variance
         self.image = None
-        super(ImageDatasetGraph, self).__init__(*args, graph_type="rbf", **kwargs)
+        super(ImageDatasetGraph, self).__init__(*args,
+                                                graph_type="rbf",
+                                                **kwargs)
 
     def load_graph(self, *args, **kwargs):
         super(ImageDatasetGraph, self).load_graph(*args, **kwargs)
 
         # Add a grid to the graph, with weight 0.01.
-        grid_graph_adj_mat = sp.sparse.lil_matrix((self.num_data_points, self.num_data_points))
+        grid_graph_adj_mat = sp.sparse.lil_matrix(
+            (self.num_data_points, self.num_data_points))
         for x in range(self.downsampled_image_dimensions[0]):
             for y in range(self.downsampled_image_dimensions[1]):
                 this_data_point = x * self.downsampled_image_dimensions[1] + y
 
                 # Add the four orthogonal edges
                 if x > 0:
-                    that_data_point = (x - 1) * self.downsampled_image_dimensions[1] + y
+                    that_data_point = (
+                        (x - 1) * self.downsampled_image_dimensions[1] + y)
                     grid_graph_adj_mat[this_data_point, that_data_point] = 0.1
                     grid_graph_adj_mat[that_data_point, this_data_point] = 0.1
                 if y > 0:
-                    that_data_point = x * self.downsampled_image_dimensions[1] + y - 1
+                    that_data_point = (
+                        x * self.downsampled_image_dimensions[1] + y - 1)
                     grid_graph_adj_mat[this_data_point, that_data_point] = 0.1
                     grid_graph_adj_mat[that_data_point, this_data_point] = 0.1
         grid_graph = sgtl.graph.Graph(grid_graph_adj_mat)
@@ -176,17 +196,25 @@ class ImageDatasetGraph(DatasetGraph):
 
         # Compute the downsample factor if needed
         if self.downsample_factor is None:
-            current_num_vertices = self.original_image_dimensions[0] * self.original_image_dimensions[1]
+            current_num_vertices = (self.original_image_dimensions[0] *
+                                    self.original_image_dimensions[1])
 
             if current_num_vertices > 20000:
-                self.downsample_factor = int(math.sqrt(current_num_vertices / 20000))
+                self.downsample_factor = int(
+                    math.sqrt(current_num_vertices / 20000))
             else:
                 self.downsample_factor = 1
 
         # Do the downsampling here
-        img_l1 = skimage.measure.block_reduce(img[:, :, 0], self.downsample_factor, func=numpy.mean)
-        img_l2 = skimage.measure.block_reduce(img[:, :, 1], self.downsample_factor, func=numpy.mean)
-        img_l3 = skimage.measure.block_reduce(img[:, :, 2], self.downsample_factor, func=numpy.mean)
+        img_l1 = skimage.measure.block_reduce(img[:, :, 0],
+                                              self.downsample_factor,
+                                              func=numpy.mean)
+        img_l2 = skimage.measure.block_reduce(img[:, :, 1],
+                                              self.downsample_factor,
+                                              func=numpy.mean)
+        img_l3 = skimage.measure.block_reduce(img[:, :, 2],
+                                              self.downsample_factor,
+                                              func=numpy.mean)
         img = numpy.stack([img_l1, img_l2, img_l3], axis=2)
         self.downsampled_image_dimensions = (img.shape[0], img.shape[1])
 
@@ -198,11 +226,8 @@ class ImageDatasetGraph(DatasetGraph):
         self.raw_data = []
         for x in range(img.shape[0]):
             for y in range(img.shape[1]):
-                self.raw_data.append([img[x, y, 0],
-                                      img[x, y, 1],
-                                      img[x, y, 2],
-                                      x,
-                                      y])
+                self.raw_data.append(
+                    [img[x, y, 0], img[x, y, 1], img[x, y, 2], x, y])
         self.raw_data = numpy.array(self.raw_data)
 
     def save_downsampled_image(self, filename):
@@ -213,9 +238,15 @@ class ImageDatasetGraph(DatasetGraph):
         """
         # Load and downsample the image
         img = image.imread(self.image_filename)
-        img_l1 = skimage.measure.block_reduce(img[:, :, 0], self.downsample_factor, func=numpy.mean)
-        img_l2 = skimage.measure.block_reduce(img[:, :, 1], self.downsample_factor, func=numpy.mean)
-        img_l3 = skimage.measure.block_reduce(img[:, :, 2], self.downsample_factor, func=numpy.mean)
+        img_l1 = skimage.measure.block_reduce(img[:, :, 0],
+                                              self.downsample_factor,
+                                              func=numpy.mean)
+        img_l2 = skimage.measure.block_reduce(img[:, :, 1],
+                                              self.downsample_factor,
+                                              func=numpy.mean)
+        img_l3 = skimage.measure.block_reduce(img[:, :, 2],
+                                              self.downsample_factor,
+                                              func=numpy.mean)
         img = numpy.stack([img_l1, img_l2, img_l3], axis=2)
 
         # Blur the image slightly
@@ -227,16 +258,22 @@ class ImageDatasetGraph(DatasetGraph):
     def downsampled_image(self):
         # Load and downsample the image
         img = image.imread(self.image_filename)
-        img_l1 = skimage.measure.block_reduce(img[:, :, 0], self.downsample_factor, func=numpy.mean)
-        img_l2 = skimage.measure.block_reduce(img[:, :, 1], self.downsample_factor, func=numpy.mean)
-        img_l3 = skimage.measure.block_reduce(img[:, :, 2], self.downsample_factor, func=numpy.mean)
+        img_l1 = skimage.measure.block_reduce(img[:, :, 0],
+                                              self.downsample_factor,
+                                              func=numpy.mean)
+        img_l2 = skimage.measure.block_reduce(img[:, :, 1],
+                                              self.downsample_factor,
+                                              func=numpy.mean)
+        img_l3 = skimage.measure.block_reduce(img[:, :, 2],
+                                              self.downsample_factor,
+                                              func=numpy.mean)
         img = numpy.stack([img_l1, img_l2, img_l3], axis=2)
 
         # Blur the image slightly
         img = skimage.filters.gaussian(img, sigma=self.blur_variance)
 
         return img
-    
+
     def save_clustering(self, clusters, filename):
         """
         Save the segmentation given by the given clusters.
@@ -249,16 +286,22 @@ class ImageDatasetGraph(DatasetGraph):
 
         # Construct the labelled image with the downsampled dimensions
         labelled_image = numpy.array(pixel_labels, dtype="int32")
-        labelled_image = numpy.reshape(labelled_image, self.downsampled_image_dimensions) + 1
+        labelled_image = numpy.reshape(labelled_image,
+                                       self.downsampled_image_dimensions) + 1
 
         # Scale up the segmentation by taking the appropriate tensor product
-        labelled_image_upsample = \
-            numpy.kron(labelled_image, numpy.ones((self.downsample_factor, self.downsample_factor)))
-        labelled_image_upsample = labelled_image_upsample[:self.original_image_dimensions[0],
-                                                          :self.original_image_dimensions[1]]
+        labelled_image_upsample = (numpy.kron(
+            labelled_image,
+            numpy.ones((self.downsample_factor, self.downsample_factor))))
+        labelled_image_upsample = (
+            labelled_image_upsample[:self.original_image_dimensions[0],
+                                    :self.original_image_dimensions[1]])
 
         # Save the image, setting the color of each segment to the average of the segment in the original image.
-        image.imsave(filename, label2rgb(labelled_image_upsample, self.image, kind='avg'))
+        image.imsave(
+            filename, label2rgb(labelled_image_upsample,
+                                self.image,
+                                kind='avg'))
 
     def __str__(self):
         return f"image({self.image_filename})"
